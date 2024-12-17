@@ -166,7 +166,7 @@ export class EnvironmentVariables {
   public CL_API_GET_BLOCK_INFO_MAX_RETRIES = 1;
 
   @IsNumber()
-  @Min(74240) // Altair
+  @Min(0) // Start from Electra(=Alpaca)
   @Transform(({ value }) => parseInt(value, 10), { toClassOnly: true })
   @ValidateIf((vars) => vars.ETH_NETWORK === Network.Mainnet)
   public START_EPOCH = 155000;
