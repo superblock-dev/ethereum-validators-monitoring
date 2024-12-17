@@ -9,7 +9,6 @@ import { AttestationMetrics } from './attestation';
 import { ProposeMetrics } from './propose';
 import { StateMetrics } from './state';
 import { SummaryMetrics } from './summary';
-import { SyncMetrics } from './sync';
 import { WithdrawalsMetrics } from './withdrawal';
 import { Epoch } from '../common/consensus-provider/types';
 import { ClickhouseService } from '../storage';
@@ -24,7 +23,6 @@ export class DutyMetrics {
     protected readonly stateMetrics: StateMetrics,
     protected readonly attestationMetrics: AttestationMetrics,
     protected readonly proposeMetrics: ProposeMetrics,
-    protected readonly syncMetrics: SyncMetrics,
     protected readonly withdrawalsMetrics: WithdrawalsMetrics,
     protected readonly summaryMetrics: SummaryMetrics,
     protected readonly storage: ClickhouseService,
@@ -47,7 +45,6 @@ export class DutyMetrics {
     await allSettled([
       this.attestationMetrics.calculate(epoch, possibleHighRewardValidators),
       this.proposeMetrics.calculate(epoch, possibleHighRewardValidators),
-      this.syncMetrics.calculate(epoch, possibleHighRewardValidators),
     ]);
   }
 }

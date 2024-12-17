@@ -7,7 +7,6 @@ import { PrometheusService, TrackTask } from 'common/prometheus';
 
 import { AttestationRewards } from './attestation';
 import { ProposeRewards } from './propose';
-import { SyncRewards } from './sync';
 import { Epoch } from '../common/consensus-provider/types';
 
 @Injectable()
@@ -18,7 +17,6 @@ export class DutyRewards {
     protected readonly prometheus: PrometheusService,
 
     protected readonly attestationRewards: AttestationRewards,
-    protected readonly syncRewards: SyncRewards,
     protected readonly proposerRewards: ProposeRewards,
   ) {}
 
@@ -27,6 +25,6 @@ export class DutyRewards {
     // todo: 'Slashed' case
     // todo: 'Inactivity leak' case
     this.logger.log('Calculate rewards for all duties');
-    await allSettled([this.attestationRewards.calculate(epoch), this.syncRewards.calculate(epoch), this.proposerRewards.calculate(epoch)]);
+    await allSettled([this.attestationRewards.calculate(epoch), this.proposerRewards.calculate(epoch)]);
   }
 }

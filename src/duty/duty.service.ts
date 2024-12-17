@@ -15,11 +15,9 @@ import { AttestationService } from './attestation';
 import { TIMELY_HEAD_WEIGHT, TIMELY_SOURCE_WEIGHT, TIMELY_TARGET_WEIGHT } from './attestation/attestation.constants';
 import { DutyRewards } from './duty.rewards';
 import { ProposeService } from './propose';
-import { PROPOSER_WEIGHT, WEIGHT_DENOMINATOR, proposerAttPartReward } from './propose/propose.constants';
+import { proposerAttPartReward } from './propose/propose.constants';
 import { StateService } from './state';
 import { SummaryService } from './summary';
-import { SyncService } from './sync';
-import { syncReward } from './sync/sync.constants';
 import { WithdrawalsService } from './withdrawal';
 
 @Injectable()
@@ -34,7 +32,6 @@ export class DutyService {
     protected readonly state: StateService,
     protected readonly attestation: AttestationService,
     protected readonly propose: ProposeService,
-    protected readonly sync: SyncService,
     protected readonly summary: SummaryService,
     protected readonly storage: ClickhouseService,
     protected readonly rewards: DutyRewards,
@@ -68,7 +65,6 @@ export class DutyService {
     await allSettled([
       this.state.check(epoch, stateSlot),
       this.attestation.check(epoch, stateSlot),
-      this.sync.check(epoch, stateSlot),
       this.propose.check(epoch),
       this.withdrawals.check(epoch),
     ]);
@@ -97,11 +93,8 @@ export class DutyService {
     const actualSlotHeader = <BlockHeaderResponse>await this.clClient.getBlockHeader('head');
     const headEpoch = Math.trunc(actualSlotHeader.header.message.slot / this.config.get('FETCH_INTERVAL_SLOTS'));
     this.logger.log('Getting possible high reward validator indexes');
-    const [sync, prop] = await allSettled([
-      this.clClient.getSyncCommitteeInfo('finalized', headEpoch),
-      this.clClient.getCanonicalProposerDuties(headEpoch, 3, true),
-    ]);
-    return [...new Set([...prop.map((v) => v.validator_index), ...sync.validators])];
+    const prop = await this.clClient.getCanonicalProposerDuties(headEpoch, 3, true);
+    return [...new Set([...prop.map((v) => v.validator_index)])];
   }
 
   @TrackTask('fill-epoch-metadata')
@@ -113,15 +106,12 @@ export class DutyService {
   @TrackTask('fill-att-sync-epoch-metadata')
   protected async fillAttestationAndSyncMetadata(epoch: Epoch): Promise<any> {
     const meta = this.summary.epoch(epoch).getMeta();
-    meta.sync.per_block_reward = Number(syncReward(meta.state.active_validators_total_increments, meta.state.base_reward));
-    const perSyncProposerReward = Math.floor((meta.sync.per_block_reward * PROPOSER_WEIGHT) / (WEIGHT_DENOMINATOR - PROPOSER_WEIGHT));
     const maxBatchSize = 1000;
     let index = 0;
     for (const v of this.summary.epoch(epoch).values()) {
       const effectiveBalance = v.val_effective_balance;
       const increments = Number(effectiveBalance / BigInt(10 ** 9));
       // Attestation participation calculated by previous epoch data
-      // Sync part of proposal reward should be calculated from current epoch
       const attested = this.summary.epoch(epoch - 1).get(v.val_id);
       if (!v.val_slashed && attested?.att_happened) {
         if (attested.att_valid_source) {
@@ -132,11 +122,6 @@ export class DutyService {
         }
         if (attested.att_valid_head) {
           meta.attestation.participation.head += BigInt(increments);
-        }
-      }
-      if (v.is_sync) {
-        for (const block of v.sync_meta.synced_blocks) {
-          meta.sync.blocks_rewards.set(block, meta.sync.blocks_rewards.get(block) + BigInt(perSyncProposerReward));
         }
       }
       index++;

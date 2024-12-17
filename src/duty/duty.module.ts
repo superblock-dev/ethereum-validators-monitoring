@@ -11,7 +11,6 @@ import { DutyService } from './duty.service';
 import { ProposeModule } from './propose';
 import { StateModule } from './state';
 import { SummaryModule } from './summary';
-import { SyncModule } from './sync';
 import { WithdrawalsModule } from './withdrawal';
 
 @Module({
@@ -19,7 +18,6 @@ import { WithdrawalsModule } from './withdrawal';
     AttestationModule,
     ProposeModule,
     StateModule,
-    SyncModule,
     WithdrawalsModule,
     SummaryModule,
     ConsensusProviderModule,
