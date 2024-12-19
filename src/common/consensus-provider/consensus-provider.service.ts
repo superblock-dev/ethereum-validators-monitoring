@@ -18,7 +18,7 @@ import { MaxDeepError, ResponseError, errCommon, errRequest } from './errors';
 import { BlockHeaderResponse, BlockInfoResponse, GenesisResponse, ProposerDutyInfo, VersionResponse } from './intefaces';
 import { BlockId, Epoch, Slot, StateId } from './types';
 
-let ssz: typeof import('@lodestar/types').ssz;
+let ssz: typeof import('@syjn99/lodestar-types').ssz;
 let anySsz: typeof ssz.phase0 | typeof ssz.altair | typeof ssz.bellatrix | typeof ssz.capella | typeof ssz.deneb | typeof ssz.electra;
 let ForkName: typeof import('@lodestar/params').ForkName;
 
@@ -221,10 +221,13 @@ export class ConsensusProviderService {
         dataOnly: false,
       },
     );
-    const forkName = headers['eth-consensus-version'] as keyof typeof ForkName;
+    let forkName = headers['eth-consensus-version'] as keyof typeof ForkName;
+    if (forkName === 'alpaca') {
+      forkName = 'electra';
+    }
     const bodyBytes = new Uint8Array(await body.arrayBuffer());
     // ugly hack to import ESModule to CommonJS project
-    ssz = await eval(`import('@lodestar/types').then((m) => m.ssz)`);
+    ssz = await eval(`import('@syjn99/lodestar-types').then((m) => m.ssz)`);
     return ssz[forkName].BeaconState.deserializeToView(bodyBytes) as any as ContainerTreeViewType<typeof anySsz.BeaconState.fields>;
   }
 

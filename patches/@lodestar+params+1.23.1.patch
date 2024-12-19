@@ -1,0 +1,24 @@
+diff --git a/node_modules/@lodestar/params/lib/forkName.d.ts b/node_modules/@lodestar/params/lib/forkName.d.ts
+index 5137517..bddffff 100644
+--- a/node_modules/@lodestar/params/lib/forkName.d.ts
++++ b/node_modules/@lodestar/params/lib/forkName.d.ts
+@@ -7,7 +7,8 @@ export declare enum ForkName {
+     bellatrix = "bellatrix",
+     capella = "capella",
+     deneb = "deneb",
+-    electra = "electra"
++    electra = "electra",
++    alpaca = "alpaca"
+ }
+ /**
+  * Fork sequence number in order of occurrence
+@@ -18,7 +19,8 @@ export declare enum ForkSeq {
+     bellatrix = 2,
+     capella = 3,
+     deneb = 4,
+-    electra = 5
++    electra = 5,
++    alpaca = 6
+ }
+ export declare function highestFork<F extends ForkName>(forkNames: F[]): F;
+ export declare function lowestFork<F extends ForkName>(forkNames: F[]): F;

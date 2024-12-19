@@ -1236,15 +1236,6 @@
   resolved "https://registry.yarnpkg.com/@lodestar/params/-/params-1.23.1.tgz#8b8781163e1790a20808b9ff9666ad4669fc61b3"
   integrity sha512-H698VFmYtN6BbIW1TR5hv4uwXLU29Dlkp8AY36l/SNOAUwRWsQB8ME/R04aBiLelJuctOAEPUzOA/kO/lC2XCA==
 
-"@lodestar/types@^1.23.1":
-  version "1.23.1"
-  resolved "https://registry.yarnpkg.com/@lodestar/types/-/types-1.23.1.tgz#ef078f378afc0568ead24be7072e39731455a303"
-  integrity sha512-z72S/kFbCTnsz1dfJs/7TljRPOxcYd283y8orqX5qssrRe9J8e9U5SUBTkk6yr3G/NMLnRP/4alI1p/oZr2mNw==
-  dependencies:
-    "@chainsafe/ssz" "^0.18.0"
-    "@lodestar/params" "^1.23.1"
-    ethereum-cryptography "^2.0.0"
-
 "@lukeed/csprng@^1.0.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@lukeed/csprng/-/csprng-1.1.0.tgz#1e3e4bd05c1cc7a0b2ddbd8a03f39f6e4b5e6cfe"
@@ -1502,6 +1493,15 @@
   integrity sha512-OAPJUAtgeINhh/TAlUID4QTs53Njm7xzddaVlEs/SXwgtiD1tW22zAB/W1wdqfrpmikgaWQ9Fw6Ws+hsiRm5Vg==
   dependencies:
     "@sinonjs/commons" "^1.7.0"
+
+"@syjn99/lodestar-types@1.0.4":
+  version "1.0.4"
+  resolved "https://npm.pkg.github.com/download/@syjn99/lodestar-types/1.0.4/80d4d942fd7d778c7a258c92c6124febf8ecf826#80d4d942fd7d778c7a258c92c6124febf8ecf826"
+  integrity sha512-ps9gtfMZwodC7qSU7y3yE3zL4to0sswSrSKz1gymScXZCdwjCdGAUxbm+3jZGlr10lgx9JimrfTF47R5LUqqTw==
+  dependencies:
+    "@chainsafe/ssz" "^0.18.0"
+    "@lodestar/params" "^1.23.1"
+    ethereum-cryptography "^2.0.0"
 
 "@szmarczak/http-timer@4.0.6":
   version "4.0.6"
