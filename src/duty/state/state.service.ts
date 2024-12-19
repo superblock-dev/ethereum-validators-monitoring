@@ -121,12 +121,22 @@ export class StateService {
         return validator.slashed ? ValStatus.ActiveSlashed : ValStatus.ActiveExiting;
       }
     }
+
+    let withdrawableEpoch;
+    if (validator.exitEpoch === FAR_FUTURE_EPOCH) {
+      withdrawableEpoch = FAR_FUTURE_EPOCH;
+    } else if (validator.slashed) {
+      withdrawableEpoch = validator.exitEpoch + 8192;
+    } else {
+      withdrawableEpoch = validator.exitEpoch + 256;
+    }
+
     // exited
-    if (validator.exitEpoch <= currentEpoch && currentEpoch < validator.withdrawableEpoch) {
+    if (validator.exitEpoch <= currentEpoch && currentEpoch < withdrawableEpoch) {
       return validator.slashed ? ValStatus.ExitedSlashed : ValStatus.ExitedUnslashed;
     }
     // withdrawal
-    if (validator.withdrawableEpoch <= currentEpoch) {
+    if (withdrawableEpoch <= currentEpoch) {
       return validator.effectiveBalance !== 0 ? ValStatus.WithdrawalPossible : ValStatus.WithdrawalDone;
     }
     throw new Error('ValidatorStatus unknown');
