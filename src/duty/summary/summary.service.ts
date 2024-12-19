@@ -27,25 +27,15 @@ export interface ValidatorDutySummary {
   block_to_propose?: number;
   block_proposed?: boolean;
   ///
-  is_sync?: boolean;
-  sync_percent?: number;
-  ///
   att_happened?: boolean;
   att_inc_delay?: number;
   att_valid_head?: boolean;
   att_valid_target?: boolean;
   att_valid_source?: boolean;
-  // Metadata. Necessary for calculating rewards and will not be stored in DB
-  sync_meta?: {
-    synced_blocks?: number[];
-  };
   // Rewards
   att_earned_reward?: number;
   att_missed_reward?: number;
   att_penalty?: number;
-  sync_earned_reward?: number;
-  sync_missed_reward?: number;
-  sync_penalty?: number;
   propose_earned_reward?: bigint;
   propose_missed_reward?: bigint;
   propose_penalty?: bigint;

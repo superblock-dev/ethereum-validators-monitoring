@@ -99,12 +99,12 @@ export class DutyService {
 
   @TrackTask('fill-epoch-metadata')
   protected async fillCurrentEpochMetadata(epoch: Epoch): Promise<any> {
-    await this.fillAttestationAndSyncMetadata(epoch);
+    await this.fillAttestationMetadata(epoch);
     await this.fillProposalRewardsMetadata(epoch);
   }
 
-  @TrackTask('fill-att-sync-epoch-metadata')
-  protected async fillAttestationAndSyncMetadata(epoch: Epoch): Promise<any> {
+  @TrackTask('fill-att-epoch-metadata')
+  protected async fillAttestationMetadata(epoch: Epoch): Promise<any> {
     const meta = this.summary.epoch(epoch).getMeta();
     const maxBatchSize = 1000;
     let index = 0;
@@ -168,7 +168,7 @@ export class DutyService {
   }
 
   protected async writeSummary(epoch: Epoch): Promise<any> {
-    this.logger.log('Writing summary of duties into DB');
+    this.logger.log(`Writing summary of duties into DB: ${epoch}`);
     await this.storage.writeSummary(this.summary.epoch(epoch).values());
   }
 

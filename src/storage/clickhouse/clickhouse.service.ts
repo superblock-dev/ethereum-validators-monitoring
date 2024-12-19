@@ -17,27 +17,22 @@ import { EpochMeta, ValidatorDutySummary } from 'duty/summary';
 import {
   avgChainRewardsAndPenaltiesStats,
   avgValidatorBalanceDelta,
-  chainSyncParticipationAvgPercentQuery,
   epochMetadata,
   epochProcessing,
   operatorBalance24hDifferenceQuery,
-  operatorsSyncParticipationAvgPercentsQuery,
   otherChainWithdrawalsStats,
-  otherSyncParticipationAvgPercentQuery,
   otherValidatorsSummaryStatsQuery,
   totalBalance24hDifferenceQuery,
   userNodeOperatorsProposesStatsLastNEpochQuery,
   userNodeOperatorsRewardsAndPenaltiesStats,
   userNodeOperatorsStatsQuery,
   userNodeOperatorsWithdrawalsStats,
-  userSyncParticipationAvgPercentQuery,
   userValidatorsSummaryStatsQuery,
   validatorCountByConditionAttestationLastNEpochQuery,
   validatorCountHighAvgIncDelayAttestationOfNEpochQuery,
   validatorQuantile0001BalanceDeltasQuery,
   validatorsCountByConditionMissProposeQuery,
   validatorsCountWithNegativeDeltaQuery,
-  validatorsCountWithSyncParticipationByConditionLastNEpochQuery,
 } from './clickhouse.constants';
 import {
   AvgChainRewardsStats,
@@ -50,10 +45,7 @@ import {
   NOsValidatorsNegDeltaCount,
   NOsValidatorsRewardsStats,
   NOsValidatorsStatusStats,
-  NOsValidatorsSyncAvgPercent,
-  NOsValidatorsSyncByConditionCount,
   NOsWithdrawalsStats,
-  SyncCommitteeParticipationAvgPercents,
   ValidatorsStatusStats,
   WithdrawalsStats,
 } from './clickhouse.types';
@@ -161,8 +153,6 @@ export class ClickhouseService implements OnModuleInit {
                   propose_earned_reward: chunk.propose_earned_reward?.toString(),
                   propose_missed_reward: chunk.propose_missed_reward?.toString(),
                   propose_penalty: chunk.propose_penalty?.toString(),
-                  sync_meta: undefined,
-                  val_pubkey: undefined,
                 });
               },
               objectMode: true,
@@ -186,7 +176,7 @@ export class ClickhouseService implements OnModuleInit {
           },
         ]),
       ),
-    );
+    )
   }
 
   @TrackTask('write-epoch-meta')
@@ -265,88 +255,6 @@ export class ClickhouseService implements OnModuleInit {
 
   public async getValidatorsCountWithNegativeDelta(epoch: Epoch): Promise<NOsValidatorsNegDeltaCount[]> {
     return (await this.select<NOsValidatorsNegDeltaCount[]>(validatorsCountWithNegativeDeltaQuery(epoch))).map((v) => ({
-      ...v,
-      amount: Number(v.amount),
-    }));
-  }
-
-  /**
-   * Send query to Clickhouse and receives information about User Sync Committee participants
-   */
-  public async getUserSyncParticipationAvgPercent(epoch: Epoch): Promise<SyncCommitteeParticipationAvgPercents[]> {
-    return (await this.select<SyncCommitteeParticipationAvgPercents[]>(userSyncParticipationAvgPercentQuery(epoch))).map((v) => ({
-      ...v,
-      amount: Number(v.amount),
-    }));
-  }
-
-  /**
-   * Send query to Clickhouse and receives information about Other Sync Committee avg percent
-   */
-  public async getOtherSyncParticipationAvgPercent(epoch: Epoch): Promise<SyncCommitteeParticipationAvgPercents> {
-    const ret = await this.select(otherSyncParticipationAvgPercentQuery(epoch));
-    return { amount: Number(ret[0].amount) };
-  }
-
-  /**
-   * Send query to Clickhouse and receives information about Chain Sync Committee acg percent
-   */
-  public async getChainSyncParticipationAvgPercent(epoch: Epoch): Promise<SyncCommitteeParticipationAvgPercents> {
-    const ret = await this.select(chainSyncParticipationAvgPercentQuery(epoch));
-    return { amount: Number(ret[0].amount) };
-  }
-
-  /**
-   * Send query to Clickhouse and receives information about Operator Sync Committee participants
-   */
-  public async getOperatorSyncParticipationAvgPercents(epoch: Epoch): Promise<NOsValidatorsSyncAvgPercent[]> {
-    return (await this.select<NOsValidatorsSyncAvgPercent[]>(operatorsSyncParticipationAvgPercentsQuery(epoch))).map((v) => ({
-      ...v,
-      amount: Number(v.amount),
-    }));
-  }
-
-  public async getValidatorsCountWithGoodSyncParticipationLastNEpoch(
-    epoch: Epoch,
-    epochInterval: number,
-    chainAvg: number,
-    validatorIndexes: string[] = [],
-  ): Promise<NOsValidatorsSyncByConditionCount[]> {
-    return (
-      await this.select<NOsValidatorsSyncByConditionCount[]>(
-        validatorsCountWithSyncParticipationByConditionLastNEpochQuery(
-          epoch,
-          epochInterval,
-          validatorIndexes,
-          `sync_percent >= (${chainAvg} - ${this.config.get('SYNC_PARTICIPATION_DISTANCE_DOWN_FROM_CHAIN_AVG')})`,
-        ),
-      )
-    ).map((v) => ({
-      ...v,
-      amount: Number(v.amount),
-    }));
-  }
-
-  /**
-   * Send query to Clickhouse and receives information about
-   * how many User Node Operator validators have Sync Committee participation less when chain average last N epoch
-   */
-  public async getValidatorsCountWithBadSyncParticipationLastNEpoch(
-    epoch: Epoch,
-    epochInterval: number,
-    chainAvg: number,
-    validatorIndexes: string[] = [],
-  ): Promise<NOsValidatorsSyncByConditionCount[]> {
-    return (
-      await this.select<NOsValidatorsSyncByConditionCount[]>(
-        validatorsCountWithSyncParticipationByConditionLastNEpochQuery(
-          epoch,
-          epochInterval,
-          validatorIndexes,
-          `sync_percent < abs(${chainAvg} - ${this.config.get('SYNC_PARTICIPATION_DISTANCE_DOWN_FROM_CHAIN_AVG')})`,
-        ),
-      )
-    ).map((v) => ({
       ...v,
       amount: Number(v.amount),
     }));
@@ -636,9 +544,6 @@ export class ClickhouseService implements OnModuleInit {
       prop_reward: +v.prop_reward,
       prop_missed: +v.prop_missed,
       prop_penalty: +v.prop_penalty,
-      sync_reward: +v.sync_reward,
-      sync_missed: +v.sync_missed,
-      sync_penalty: +v.sync_penalty,
       att_reward: +v.att_reward,
       att_missed: +v.att_missed,
       att_penalty: +v.att_penalty,
@@ -656,9 +561,6 @@ export class ClickhouseService implements OnModuleInit {
       prop_reward: +v.prop_reward,
       prop_missed: +v.prop_missed,
       prop_penalty: +v.prop_penalty,
-      sync_reward: +v.sync_reward,
-      sync_missed: +v.sync_missed,
-      sync_penalty: +v.sync_penalty,
       att_reward: +v.att_reward,
       att_missed: +v.att_missed,
       att_penalty: +v.att_penalty,

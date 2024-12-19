@@ -22,18 +22,6 @@ export interface NOsValidatorsNegDeltaCount {
   amount: number;
 }
 
-export interface NOsValidatorsSyncAvgPercent {
-  val_nos_module_id: string;
-  val_nos_id: string;
-  amount: number;
-}
-
-export interface NOsValidatorsSyncByConditionCount {
-  val_nos_module_id: string;
-  val_nos_id: string;
-  amount: number;
-}
-
 export interface NOsValidatorsByConditionAttestationCount {
   val_nos_module_id: string;
   val_nos_id: string;
@@ -62,9 +50,6 @@ export interface NOsValidatorsRewardsStats {
   prop_reward: number;
   prop_missed: number;
   prop_penalty: number;
-  sync_reward: number;
-  sync_missed: number;
-  sync_penalty: number;
   att_reward: number;
   att_missed: number;
   att_penalty: number;
@@ -80,9 +65,6 @@ export interface AvgChainRewardsStats {
   prop_reward: number;
   prop_missed: number;
   prop_penalty: number;
-  sync_reward: number;
-  sync_missed: number;
-  sync_penalty: number;
   att_reward: number;
   att_missed: number;
   att_penalty: number;
@@ -93,11 +75,6 @@ export interface NOsProposesStats {
   val_nos_id: string;
   all: number;
   missed: number;
-}
-
-export interface SyncCommitteeParticipationAvgPercents {
-  val_nos_module_id?: string;
-  amount: number;
 }
 
 export interface EpochProcessingState {

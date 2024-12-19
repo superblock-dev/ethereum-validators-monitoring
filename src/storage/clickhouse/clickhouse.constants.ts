@@ -150,44 +150,6 @@ export const validatorsCountWithNegativeDeltaQuery = (epoch: Epoch): string => `
   HAVING (current.val_balance - previous.val_balance + ifNull(withdrawals.withdrawn, 0)) < 0 AND current.val_slashed = 0
 `;
 
-export const validatorsCountWithSyncParticipationByConditionLastNEpochQuery = (
-  epoch: Epoch,
-  epochInterval: number,
-  validatorIndexes: string[] = [],
-  condition: string,
-): string => {
-  let strFilterValIndexes = '';
-  if (validatorIndexes.length > 0) {
-    strFilterValIndexes = `AND val_id in [${validatorIndexes.map((i) => `'${i}'`).join(',')}]`;
-  }
-  return `
-    SELECT
-      val_nos_module_id,
-      val_nos_id,
-      count() as amount
-    FROM (
-      SELECT
-        val_nos_module_id,
-        val_nos_id,
-        count() AS count_fail
-      FROM (
-        SELECT val_id, val_nos_module_id, val_nos_id
-        FROM validators_summary
-        WHERE
-          is_sync = 1 AND
-          ${condition} AND
-          val_stuck = 0 AND
-          (epoch <= ${epoch} AND epoch > (${epoch} - ${epochInterval}))
-          ${strFilterValIndexes}
-        LIMIT 1 BY epoch, val_id
-      )
-      GROUP BY val_id, val_nos_module_id, val_nos_id
-    )
-    WHERE count_fail = ${epochInterval}
-    GROUP BY val_nos_module_id, val_nos_id
-  `;
-};
-
 export const validatorCountByConditionAttestationLastNEpochQuery = (
   epoch: Epoch,
   epochInterval: number,
@@ -277,59 +239,6 @@ export const validatorsCountByConditionMissProposeQuery = (epoch: Epoch, validat
     GROUP BY val_nos_module_id, val_nos_id
   `;
 };
-
-export const userSyncParticipationAvgPercentQuery = (epoch: Epoch): string => `
-  SELECT
-    val_nos_module_id,
-    avg(sync_percent) as amount
-  FROM (
-    SELECT val_nos_module_id, sync_percent
-    FROM validators_summary
-    WHERE
-      is_sync = 1 AND val_nos_id IS NOT NULL AND val_stuck = 0 AND epoch = ${epoch}
-    LIMIT 1 BY val_id
-  )
-  GROUP BY val_nos_module_id
-`;
-
-export const otherSyncParticipationAvgPercentQuery = (epoch: Epoch): string => `
-  SELECT
-    avg(sync_percent) as amount
-  FROM (
-    SELECT sync_percent
-    FROM validators_summary
-    WHERE
-      is_sync = 1 AND val_nos_id IS NULL AND epoch = ${epoch}
-    LIMIT 1 BY val_id
-  )
-`;
-
-export const chainSyncParticipationAvgPercentQuery = (epoch: Epoch): string => `
-  SELECT
-    avg(sync_percent) as amount
-  FROM (
-    SELECT sync_percent
-    FROM validators_summary
-    WHERE
-      is_sync = 1 AND epoch = ${epoch}
-    LIMIT 1 BY val_id
-  )
-`;
-
-export const operatorsSyncParticipationAvgPercentsQuery = (epoch: Epoch): string => `
-  SELECT
-    val_nos_module_id,
-    val_nos_id,
-    avg(sync_percent) as amount
-  FROM (
-    SELECT val_nos_module_id, val_nos_id, sync_percent
-    FROM validators_summary
-    WHERE
-      is_sync = 1 AND val_nos_id IS NOT NULL AND val_stuck = 0 AND epoch = ${epoch}
-    LIMIT 1 BY val_id
-  )
-  GROUP BY val_nos_module_id, val_nos_id
-`;
 
 export const totalBalance24hDifferenceQuery = (epoch: Epoch): string => `
   SELECT
@@ -587,17 +496,14 @@ export const userNodeOperatorsRewardsAndPenaltiesStats = (epoch: Epoch): string 
     --
     attestation_reward as att_reward,
     ifNull(prop_reward, 0) as prop_reward,
-    ifNull(sync_reward, 0) as sync_reward,
     attestation_missed as att_missed,
     ifNull(prop_missed, 0) as prop_missed,
-    ifNull(sync_missed, 0) as sync_missed,
     attestation_penalty as att_penalty,
     ifNull(prop_penalty, 0) as prop_penalty,
-    ifNull(sync_penalty, 0) as sync_penalty,
     --
-    att_reward + prop_reward + sync_reward as total_reward,
-    att_missed + prop_missed + sync_missed as total_missed,
-    att_penalty + prop_penalty + sync_penalty as total_penalty,
+    att_reward + prop_reward as total_reward,
+    att_missed + prop_missed as total_missed,
+    att_penalty + prop_penalty as total_penalty,
     total_reward - total_penalty as calculated_balance_change,
     real_balance_change,
     calculated_balance_change - real_balance_change as calculation_error
@@ -634,24 +540,6 @@ export const userNodeOperatorsRewardsAndPenaltiesStats = (epoch: Epoch): string 
 	ON
 	  att.val_nos_module_id = prop.val_nos_module_id AND
 	  att.val_nos_id = prop.val_nos_id
-  LEFT JOIN (
-    SELECT
-      val_nos_module_id,
-      val_nos_id,
-      sum(sync_earned_reward) as sync_reward,
-      sum(sync_missed_reward) as sync_missed,
-      sum(sync_penalty) as sync_penalty
-    FROM (
-      SELECT val_nos_module_id, val_nos_id, sync_earned_reward, sync_missed_reward, sync_penalty
-      FROM validators_summary
-      WHERE val_nos_id IS NOT NULL AND val_stuck = 0 AND epoch = ${epoch} and is_sync = 1
-      LIMIT 1 BY val_id
-    )
-    GROUP BY val_nos_module_id, val_nos_id
-  ) as sync
-  ON
-    att.val_nos_module_id = sync.val_nos_module_id AND
-    att.val_nos_id = sync.val_nos_id
   LEFT JOIN (
     SELECT
       current.val_nos_module_id as val_nos_module_id,
@@ -704,13 +592,10 @@ export const avgChainRewardsAndPenaltiesStats = (epoch: Epoch): string => `
   SELECT
     attestation_reward as att_reward,
     ifNull(prop_reward, 0) as prop_reward,
-    ifNull(sync_reward, 0) as sync_reward,
     attestation_missed as att_missed,
     ifNull(prop_missed, 0) as prop_missed,
-    ifNull(sync_missed, 0) as sync_missed,
     attestation_penalty as att_penalty,
-    ifNull(prop_penalty, 0) as prop_penalty,
-    ifNull(sync_penalty, 0) as sync_penalty
+    ifNull(prop_penalty, 0) as prop_penalty
   FROM (
     SELECT
       avgIf(att_earned_reward, att_earned_reward > 0) as attestation_reward,
@@ -734,19 +619,7 @@ export const avgChainRewardsAndPenaltiesStats = (epoch: Epoch): string => `
       WHERE epoch = ${epoch} and is_proposer = 1
       LIMIT 1 BY val_id
     )
-	) as prop,
-  (
-    SELECT
-      avgIf(sync_earned_reward, sync_earned_reward > 0) as sync_reward,
-      avgIf(sync_missed_reward, sync_missed_reward > 0) as sync_missed,
-      avgIf(sync_penalty, sync_penalty > 0) as sync_penalty
-    FROM (
-      SELECT sync_earned_reward, sync_missed_reward, sync_penalty
-      FROM validators_summary
-      WHERE epoch = ${epoch} and is_sync = 1
-      LIMIT 1 BY val_id
-    )
-  ) as sync
+	) as prop
 `;
 
 export const userNodeOperatorsWithdrawalsStats = (epoch: Epoch): string => `

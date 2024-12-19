@@ -127,30 +127,10 @@ export interface StateValidatorResponse {
   };
 }
 
-export interface SyncCommitteeDutyInfo {
-  pubkey: string;
-  validator_index: ValidatorIndex;
-  validator_sync_committee_indices: string[];
-  results: {
-    block: string;
-    sync: boolean;
-  }[];
-}
-
-export interface SyncCommitteeInfo {
-  validators: ValidatorIndex[];
-}
-
 export interface AttestationCommitteeInfo {
   index: string;
   slot: string;
   validators: string[];
-}
-
-export interface SyncCommitteeValidator {
-  in_committee_index: number;
-  validator_index: ValidatorIndex;
-  epoch_participation_percent: number;
 }
 
 export interface VersionResponse {
