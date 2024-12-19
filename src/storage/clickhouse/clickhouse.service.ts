@@ -205,8 +205,6 @@ export class ClickhouseService implements OnModuleInit {
               att_source_participation: meta.attestation.participation.source.toString(),
               att_target_participation: meta.attestation.participation.target.toString(),
               att_head_participation: meta.attestation.participation.head.toString(),
-              sync_blocks_rewards: Array.from(meta.sync.blocks_rewards).map(([b, r]) => [b, r.toString()]),
-              sync_blocks_to_sync: meta.sync.blocks_to_sync,
             },
           ],
           format: 'JSONEachRow',
@@ -226,6 +224,8 @@ export class ClickhouseService implements OnModuleInit {
     // update is heavy operation for clickhouse, and it takes some time
     await this.retry(async () => {
       const updated = await this.getOrInitEpochProcessing(state.epoch);
+      this.logger.log("HMMM... Let's check if epoch processing info is updated");
+      this.logger.log(`Old: ${JSON.stringify(old)}, Updated: ${JSON.stringify(updated)}`);
       if (old.is_stored == updated.is_stored && old.is_calculated == updated.is_calculated) {
         throw Error('Epoch processing info is not updated yet');
       }
@@ -602,10 +602,6 @@ export class ClickhouseService implements OnModuleInit {
           target: BigInt(ret['att_target_participation']),
           head: BigInt(ret['att_head_participation']),
         },
-      };
-      metadata['sync'] = {
-        blocks_rewards: new Map(ret['sync_blocks_rewards'].map(([b, r]) => [Number(b), BigInt(r)])),
-        blocks_to_sync: ret['sync_blocks_to_sync'].map((b) => Number(b)),
       };
     }
     return metadata;

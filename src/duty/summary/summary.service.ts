@@ -63,11 +63,6 @@ export interface EpochMeta {
     blocks_attestations?: Map<BlockNumber, { source?: number[]; target?: number[]; head?: number[] }[]>;
     blocks_rewards?: Map<BlockNumber, bigint>;
   };
-  sync?: {
-    per_block_reward?: number;
-    blocks_to_sync?: number[];
-    blocks_rewards?: Map<BlockNumber, bigint>;
-  };
 }
 
 export interface EpochInfo {
@@ -128,11 +123,6 @@ export class SummaryService {
             range(epoch * 32 - 32, epoch * 32 + 32).map((b) => [b, []]),
           ),
           blocks_rewards: new Map<BlockNumber, bigint>(range(epoch * 32 - 32, epoch * 32 + 32).map((b) => [b, 0n])),
-        },
-        sync: {
-          blocks_rewards: new Map<BlockNumber, bigint>(range(epoch * 32 - 32, epoch * 32 + 32).map((b) => [b, 0n])),
-          per_block_reward: 0,
-          blocks_to_sync: [],
         },
       },
     });
