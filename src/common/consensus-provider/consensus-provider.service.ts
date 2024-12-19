@@ -15,11 +15,11 @@ import { EpochProcessingState } from 'storage/clickhouse';
 
 import { BlockCache, BlockCacheService } from './block-cache';
 import { MaxDeepError, ResponseError, errCommon, errRequest } from './errors';
-import { BlockHeaderResponse, BlockInfoResponse, GenesisResponse, ProposerDutyInfo, SyncCommitteeInfo, VersionResponse } from './intefaces';
+import { BlockHeaderResponse, BlockInfoResponse, GenesisResponse, ProposerDutyInfo, VersionResponse } from './intefaces';
 import { BlockId, Epoch, Slot, StateId } from './types';
 
 let ssz: typeof import('@lodestar/types').ssz;
-let anySsz: typeof ssz.phase0 | typeof ssz.altair | typeof ssz.bellatrix | typeof ssz.capella | typeof ssz.deneb;
+let anySsz: typeof ssz.phase0 | typeof ssz.altair | typeof ssz.bellatrix | typeof ssz.capella | typeof ssz.deneb | typeof ssz.electra;
 let ForkName: typeof import('@lodestar/params').ForkName;
 
 interface RequestRetryOptions {
@@ -44,7 +44,6 @@ export class ConsensusProviderService {
     blockInfo: (blockId: BlockId): string => `eth/v2/beacon/blocks/${blockId}`,
     beaconHeaders: (blockId: BlockId): string => `eth/v1/beacon/headers/${blockId}`,
     attestationCommittees: (stateId: StateId, epoch: Epoch): string => `eth/v1/beacon/states/${stateId}/committees?epoch=${epoch}`,
-    syncCommittee: (stateId: StateId, epoch: Epoch): string => `eth/v1/beacon/states/${stateId}/sync_committees?epoch=${epoch}`,
     proposerDutes: (epoch: Epoch): string => `eth/v1/validator/duties/proposer/${epoch}`,
     state: (stateId: StateId): string => `eth/v2/debug/beacon/states/${stateId}`,
   };
@@ -275,18 +274,6 @@ export class ConsensusProviderService {
       },
     );
     return body;
-  }
-
-  public async getSyncCommitteeInfo(stateId: StateId, epoch: Epoch): Promise<SyncCommitteeInfo> {
-    return await this.retryRequest(async (apiURL: string) => this.apiGet(apiURL, this.endpoints.syncCommittee(stateId, epoch)), {
-      useFallbackOnResolved: (r) => {
-        if (this.workingMode === WorkingMode.Finalized && stateId !== 'head' && r.hasOwnProperty('finalized') && !r.finalized) {
-          this.logger.error(`getSyncCommitteeInfo: state ${stateId} for epoch ${epoch} is not finalized`);
-          return true;
-        }
-        return false;
-      },
-    });
   }
 
   public async getCanonicalProposerDuties(epoch: Epoch, maxRetriesForGetCanonical = 3, ignoreCache = false): Promise<ProposerDutyInfo[]> {

@@ -52,9 +52,6 @@ export interface BlockInfoResponse {
     proposer_index: ValidatorIndex;
     body: {
       attestations: BeaconBlockAttestation[];
-      sync_aggregate: {
-        sync_committee_bits: string;
-      };
       execution_payload: {
         withdrawals: Withdrawal[];
       };
