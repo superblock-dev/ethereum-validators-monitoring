@@ -86,6 +86,9 @@ export class AttestationRewards {
       const penaltyHead = Math.trunc(penalties.head * epochMeta.state.base_reward * increments);
       att_earned_reward = rewardSource + rewardTarget + rewardHead;
       att_missed_reward = perfectAttestationRewards - att_earned_reward;
+      if (att_missed_reward < 0) {
+        att_missed_reward = 0; // TODO: this should be fixed, with base reward update
+      }
       att_penalty = penaltySource + penaltyTarget + penaltyHead;
       // And save it to summary of current epoch
       this.summary.epoch(epoch).set({
