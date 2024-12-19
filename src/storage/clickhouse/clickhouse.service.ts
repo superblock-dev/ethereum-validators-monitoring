@@ -153,6 +153,7 @@ export class ClickhouseService implements OnModuleInit {
                   propose_earned_reward: chunk.propose_earned_reward?.toString(),
                   propose_missed_reward: chunk.propose_missed_reward?.toString(),
                   propose_penalty: chunk.propose_penalty?.toString(),
+                  val_pubkey: undefined,
                 });
               },
               objectMode: true,
@@ -214,8 +215,6 @@ export class ClickhouseService implements OnModuleInit {
     // update is heavy operation for clickhouse, and it takes some time
     await this.retry(async () => {
       const updated = await this.getOrInitEpochProcessing(state.epoch);
-      this.logger.log("HMMM... Let's check if epoch processing info is updated");
-      this.logger.log(`Old: ${JSON.stringify(old)}, Updated: ${JSON.stringify(updated)}`);
       if (old.is_stored == updated.is_stored && old.is_calculated == updated.is_calculated) {
         throw Error('Epoch processing info is not updated yet');
       }
