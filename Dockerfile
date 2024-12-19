@@ -2,7 +2,8 @@ FROM node:18.20.1-alpine as building
 
 WORKDIR /app
 
-COPY package.json yarn.lock build-info.json ./
+COPY ./patches ./patches
+COPY package.json yarn.lock build-info.json .npmrc ./
 RUN yarn install --frozen-lockfile --non-interactive
 
 COPY ./tsconfig*.json ./
