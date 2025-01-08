@@ -39,12 +39,6 @@ export enum WorkingMode {
   Head = 'head',
 }
 
-const dencunForkEpoch = {
-  '1': 269568,
-  '5': 231680,
-  '17000': 29696,
-};
-
 const toBoolean = (value: any): boolean => {
   if (typeof value === 'boolean') {
     return value;
@@ -170,15 +164,6 @@ export class EnvironmentVariables {
   @Transform(({ value }) => parseInt(value, 10), { toClassOnly: true })
   @ValidateIf((vars) => vars.ETH_NETWORK === Network.Mainnet)
   public START_EPOCH = 155000;
-
-  @IsInt()
-  @IsPositive()
-  @Expose()
-  @Transform(
-    ({ value, obj }) =>
-      dencunForkEpoch[obj.ETH_NETWORK] || (value != null && value.trim() !== '' ? parseInt(value, 10) : Number.MAX_SAFE_INTEGER),
-  )
-  public DENCUN_FORK_EPOCH: Epoch;
 
   @IsNumber()
   @Min(32)

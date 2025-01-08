@@ -241,12 +241,6 @@ Independent of `CL_API_MAX_RETRIES`.
 * **Required:** false
 * **Default:** 155000
 ---
-`DENCUN_FORK_EPOCH` - Ethereum consensus layer epoch when the Dencun hard fork has been released. This value must be set
-only for custom networks that support the Dencun hard fork. If the value of this variable is not specified for a custom
-network, it is supposed that this network doesn't support Dencun. For officially supported networks (Mainnet, Goerli and
-Holesky) this value should be omitted.
-* **Required:** false
----
 `VALIDATOR_REGISTRY_SOURCE` - Validators registry source.
 * **Required:** false
 * **Values:** lido (Lido NodeOperatorsRegistry module keys) / keysapi (Lido keys from multiple modules) / file
@@ -321,10 +315,10 @@ You should pass env var `CRITICAL_ALERTS_ALERTMANAGER_URL=http://<alertmanager_h
 
 And if `ethereum_validators_monitoring_data_actuality < 1h` it allows you to receive alerts from table bellow
 
-| Alert name                 | Description                                                                                                     | If fired repeat | If value increased repeat |
-|----------------------------|-----------------------------------------------------------------------------------------------------------------|-----------------|---------------------------|
-| CriticalSlashing           | At least one validator was slashed                                                                              | instant         | -                         |
-| CriticalMissedProposes     | More than 1/3 blocks from Node Operator duties was missed in the last 12 hours                                  | every 6h        | -                         |
+| Alert name                 | Description                                                                                                                       | If fired repeat | If value increased repeat |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------- |
+| CriticalSlashing           | At least one validator was slashed                                                                                                | instant         | -                         |
+| CriticalMissedProposes     | More than 1/3 blocks from Node Operator duties was missed in the last 12 hours                                                    | every 6h        | -                         |
 | CriticalNegativeDelta      | More than 1/3 or more than 1000 Node Operator validators with negative balance delta (between current and 6 epochs ago)           | every 6h        | every 1h                  |
 | CriticalMissedAttestations | More than 1/3 or more than 1000 Node Operator validators with missed attestations in the last {{ BAD_ATTESTATION_EPOCHS }} epochs | every 6h        | every 1h                  |
 
@@ -334,7 +328,7 @@ And if `ethereum_validators_monitoring_data_actuality < 1h` it allows you to rec
 **WARNING: all metrics are prefixed with `ethereum_validators_monitoring_`**
 
 | Metric                                                                    | Labels                           | Description                                                                                                                                                                                  |
-|---------------------------------------------------------------------------|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | validators                                                                | owner, status                    | Count of validators in chain                                                                                                                                                                 |
 | user_validators                                                           | nos_name, status                 | Count of validators for each user Node Operator                                                                                                                                              |
 | data_actuality                                                            |                                  | Application data actuality in ms                                                                                                                                                             |

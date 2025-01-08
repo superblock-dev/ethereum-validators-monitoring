@@ -34,7 +34,6 @@ interface SlotAttestation {
 export class AttestationService {
   private processedEpoch: number;
   private readonly slotsInEpoch: number;
-  private readonly dencunEpoch: Epoch;
   private readonly savedCanonSlotsAttProperties: Map<number, string>;
 
   public constructor(
@@ -45,7 +44,6 @@ export class AttestationService {
     protected readonly summary: SummaryService,
   ) {
     this.slotsInEpoch = this.config.get('FETCH_INTERVAL_SLOTS');
-    this.dencunEpoch = this.config.get('DENCUN_FORK_EPOCH');
     this.savedCanonSlotsAttProperties = new Map<number, string>();
   }
 
@@ -87,8 +85,7 @@ export class AttestationService {
     const attValidTarget = attestation.target_root == canonTarget;
     const attValidSource = attestation.source_root == canonSource;
     const attIncDelay = Number(attestation.included_in_block - attestation.slot);
-    const isDencunFork = epoch >= this.dencunEpoch;
-    const flags = getFlags(attIncDelay, attValidSource, attValidTarget, attValidHead, isDencunFork);
+    const flags = getFlags(attIncDelay, attValidSource, attValidTarget, attValidHead);
     for (const [valCommIndex, validatorIndex] of committee.entries()) {
       const attHappened = attestation.bits.get(valCommIndex);
       if (!attHappened) {
