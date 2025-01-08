@@ -100,12 +100,8 @@ export class StateService {
       const feedbackBoost = (FEEDBACK_BOOST_FACTOR * Number(rewardAdjustmentFactor)) / EPOCHS_PER_YEAR;
       const totalReward = Math.floor((EPOCH_ISSUANCE + feedbackBoost) * 10 ** 9);
       const totalActiveIncrement = activeValidatorsEffectiveBalance;
+      const baseReward = Math.trunc(BigNumber.from(totalReward).div(BigNumber.from(totalActiveIncrement)).toNumber());
 
-      const baseReward = Math.trunc(
-        BigNumber.from(totalReward)
-          .div(BigNumber.from(totalActiveIncrement).mul(BigNumber.from(10 ** 9)))
-          .toNumber(),
-      );
       this.summary.epoch(epoch).setMeta({
         state: {
           active_validators: activeValidatorsCount,
