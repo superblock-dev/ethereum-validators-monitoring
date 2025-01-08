@@ -128,22 +128,29 @@ export class AttestationService {
     return root;
   }
 
+  // See Dora for handling new attestations (EIP-7549)
+  // https://github.com/ethpandaops/dora/blob/265c43fbf48972506b4dd0a3c39b6a95b819681d/handlers/slot.go#L334-L450
   @TrackTask('process-chain-attestations')
   protected async getProcessedAttestations() {
     this.logger.log(`Processing attestations from blocks info`);
     const bitsMap = new Map<string, BitArray>();
+    const committeeBitsMap = new Map<string, BitArray>();
     const attestations: SlotAttestation[] = [];
     const allMissedSlots: number[] = [];
+
     // Check all slots from previous epoch start to current epoch last slot
     const firstSlotInEpoch = this.processedEpoch * this.slotsInEpoch;
     const slotsToCheck: number[] = range(firstSlotInEpoch - this.slotsInEpoch, firstSlotInEpoch + this.slotsInEpoch);
+
     for (const slotToCheck of slotsToCheck) {
       const block = await this.clClient.getBlockInfo(slotToCheck);
       if (!block) {
         allMissedSlots.push(slotToCheck);
         continue;
       }
+
       for (const att of block.message.body.attestations) {
+        // Process aggregation bits
         let bits = bitsMap.get(att.aggregation_bits);
         if (!bits) {
           const bytesArray = fromHexString(att.aggregation_bits);
@@ -151,19 +158,35 @@ export class AttestationService {
           bits = CommitteeBits.deserialize(bytesArray);
           bitsMap.set(att.aggregation_bits, bits);
         }
-        attestations.push({
-          included_in_block: Number(block.message.slot),
-          bits: bits,
-          head: att.data.beacon_block_root,
-          target_root: att.data.target.root,
-          target_epoch: Number(att.data.target.epoch),
-          source_root: att.data.source.root,
-          source_epoch: Number(att.data.source.epoch),
-          slot: Number(att.data.slot),
-          committee_index: Number(att.data.index),
-        });
+
+        // Process committee bits (EIP-7549)
+        let committeeBits = committeeBitsMap.get(att.committee_bits);
+        if (!committeeBits) {
+          const bytesArray = fromHexString(att.committee_bits);
+          const CommitteeBits = new BitVectorType(bytesArray.length * 8);
+          committeeBits = CommitteeBits.deserialize(bytesArray);
+          committeeBitsMap.set(att.committee_bits, committeeBits);
+        }
+
+        // For each set bit in committee_bits, create an attestation entry
+        for (let i = 0; i < committeeBits.bitLen; i++) {
+          if (committeeBits.get(i)) {
+            attestations.push({
+              included_in_block: Number(block.message.slot),
+              bits: bits,
+              head: att.data.beacon_block_root,
+              target_root: att.data.target.root,
+              target_epoch: Number(att.data.target.epoch),
+              source_root: att.data.source.root,
+              source_epoch: Number(att.data.source.epoch),
+              slot: Number(att.data.slot),
+              committee_index: i,
+            });
+          }
+        }
       }
     }
+
     this.logger.debug(`All missed slots in getting attestations info process: ${allMissedSlots}`);
     return attestations;
   }

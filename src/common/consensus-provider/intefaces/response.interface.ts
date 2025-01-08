@@ -98,7 +98,7 @@ export interface BeaconBlockAttestation {
   aggregation_bits: string;
   data: {
     slot: string;
-    index: string;
+    index: string; // NOTE: EIP-7549 makes all index into zero.
     beacon_block_root: RootHex;
     source: {
       epoch: string;
@@ -109,6 +109,7 @@ export interface BeaconBlockAttestation {
       root: RootHex;
     };
   };
+  committee_bits: string; // NOTE: from EIP-7549
 }
 
 export interface StateValidatorResponse {
