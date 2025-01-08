@@ -9,7 +9,6 @@ import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { ConfigService } from 'common/config';
 import { ConsensusProviderService, ValStatus } from 'common/consensus-provider';
 import { Epoch, Slot } from 'common/consensus-provider/types';
-import { bigNumberSqrt } from 'common/functions/bigNumberSqrt';
 import { unblock } from 'common/functions/unblock';
 import { PrometheusService, TrackTask } from 'common/prometheus';
 import { SummaryService } from 'duty/summary';
@@ -96,20 +95,25 @@ export class StateService {
         activeValidatorsCount++;
         activeValidatorsEffectiveBalance += BigInt(validator.effectiveBalance) / BigInt(10 ** 9);
       }
-    }
-    const rewardAdjustmentFactor = (stateView as any).rewardAdjustmentFactor as UintNumberType; // TODO: Remove any
-    const feedbackBoost = (FEEDBACK_BOOST_FACTOR * Number(rewardAdjustmentFactor)) / EPOCHS_PER_YEAR;
-    const totalReward = EPOCH_ISSUANCE + feedbackBoost;
-    const totalActiveIncrement = activeValidatorsEffectiveBalance;
 
-    const baseReward = Math.trunc(BigNumber.from(totalReward).div(BigNumber.from(totalActiveIncrement)).toNumber());
-    this.summary.epoch(epoch).setMeta({
-      state: {
-        active_validators: activeValidatorsCount,
-        active_validators_total_increments: activeValidatorsEffectiveBalance,
-        base_reward: baseReward,
-      },
-    });
+      const rewardAdjustmentFactor = (stateView as any).rewardAdjustmentFactor as UintNumberType; // TODO: Remove any
+      const feedbackBoost = (FEEDBACK_BOOST_FACTOR * Number(rewardAdjustmentFactor)) / EPOCHS_PER_YEAR;
+      const totalReward = Math.floor((EPOCH_ISSUANCE + feedbackBoost) * 10 ** 9);
+      const totalActiveIncrement = activeValidatorsEffectiveBalance;
+
+      const baseReward = Math.trunc(
+        BigNumber.from(totalReward)
+          .div(BigNumber.from(totalActiveIncrement).mul(BigNumber.from(10 ** 9)))
+          .toNumber(),
+      );
+      this.summary.epoch(epoch).setMeta({
+        state: {
+          active_validators: activeValidatorsCount,
+          active_validators_total_increments: activeValidatorsEffectiveBalance,
+          base_reward: baseReward,
+        },
+      });
+    }
   }
 
   //https://github.com/ChainSafe/lodestar/blob/stable/packages/beacon-node/src/api/impl/beacon/state/utils.ts
