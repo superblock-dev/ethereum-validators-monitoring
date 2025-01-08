@@ -39,10 +39,18 @@ export class AttestationRewards {
     );
     // Perfect attestation (with multipliers). Need for calculating missed reward
     const perfect = getRewards({ source: true, target: true, head: true });
-    const perfectAttestationRewards =
-      Math.trunc(perfect.source * epochMeta.state.base_reward * 32 * sourceParticipation) +
-      Math.trunc(perfect.target * epochMeta.state.base_reward * 32 * targetParticipation) +
-      Math.trunc(perfect.head * epochMeta.state.base_reward * 32 * headParticipation);
+
+    // Pre-calculate perfect rewards for all possible effective balances (1 OVER steps)
+    const effectiveBalanceToPerfectRewardMap = new Map<number, number>();
+    for (let increments = 256; increments <= 16384; increments++) {
+      effectiveBalanceToPerfectRewardMap.set(
+        increments,
+        Math.trunc(perfect.source * epochMeta.state.base_reward * increments * sourceParticipation) +
+          Math.trunc(perfect.target * epochMeta.state.base_reward * increments * targetParticipation) +
+          Math.trunc(perfect.head * epochMeta.state.base_reward * increments * headParticipation),
+      );
+    }
+
     const maxBatchSize = 1000;
     let index = 0;
     for (const v of this.summary.epoch(epoch).values()) {
@@ -85,10 +93,14 @@ export class AttestationRewards {
       const penaltyTarget = Math.trunc(penalties.target * epochMeta.state.base_reward * increments);
       const penaltyHead = Math.trunc(penalties.head * epochMeta.state.base_reward * increments);
       att_earned_reward = rewardSource + rewardTarget + rewardHead;
-      att_missed_reward = perfectAttestationRewards - att_earned_reward;
-      if (att_missed_reward < 0) {
-        att_missed_reward = 0; // TODO: this should be fixed, with base reward update
+
+      let perfectAttestationRewards: number;
+      if (effectiveBalanceToPerfectRewardMap.has(increments)) {
+        perfectAttestationRewards = effectiveBalanceToPerfectRewardMap.get(increments);
+      } else {
+        perfectAttestationRewards = effectiveBalanceToPerfectRewardMap.get(256);
       }
+      att_missed_reward = perfectAttestationRewards - att_earned_reward;
       att_penalty = penaltySource + penaltyTarget + penaltyHead;
       // And save it to summary of current epoch
       this.summary.epoch(epoch).set({
