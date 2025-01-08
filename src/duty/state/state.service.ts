@@ -18,6 +18,14 @@ import { RegistryService } from 'validators-registry';
 
 const FAR_FUTURE_EPOCH = Infinity;
 
+// Over Tokenomics
+const MAX_SUPPLY = 1_000_000_000; // In Over
+const EPOCHS_PER_YEAR = 82125;
+
+// https://github.com/overprotocol/chronos/blob/0414ea20f92807b810b1ca980c14985ac5cf6960/beacon-chain/core/helpers/rewards_penalties.go#L328-L338
+const EPOCH_ISSUANCE = ((MAX_SUPPLY / 1000) * 20) / EPOCHS_PER_YEAR; // cfg.MaxTokenSupply / cfg.IssuancePrecision * cfg.IssuanceRate[year] / cfg.EpochsPerYear
+const FEEDBACK_BOOST_FACTOR = MAX_SUPPLY / 100_000_000; // cfg.MaxTokenSupply / cfg.RewardAdjustmentFactorPrecision
+
 type Validators = ListCompositeTreeView<
   ContainerNodeStructType<{
     pubkey: ByteVectorType;
@@ -89,11 +97,12 @@ export class StateService {
         activeValidatorsEffectiveBalance += BigInt(validator.effectiveBalance) / BigInt(10 ** 9);
       }
     }
-    const baseReward = Math.trunc(
-      BigNumber.from(64 * 10 ** 9)
-        .div(bigNumberSqrt(BigNumber.from(activeValidatorsEffectiveBalance).mul(10 ** 9)))
-        .toNumber(),
-    );
+    const rewardAdjustmentFactor = (stateView as any).rewardAdjustmentFactor as UintNumberType; // TODO: Remove any
+    const feedbackBoost = (FEEDBACK_BOOST_FACTOR * Number(rewardAdjustmentFactor)) / EPOCHS_PER_YEAR;
+    const totalReward = EPOCH_ISSUANCE + feedbackBoost;
+    const totalActiveIncrement = activeValidatorsEffectiveBalance;
+
+    const baseReward = Math.trunc(BigNumber.from(totalReward).div(BigNumber.from(totalActiveIncrement)).toNumber());
     this.summary.epoch(epoch).setMeta({
       state: {
         active_validators: activeValidatorsCount,
